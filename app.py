@@ -22,8 +22,7 @@ async def initialize_llm():
         st.error(f"Error initializing LLM: {e}")
         return None
 
-@st.cache_data  # Use st.cache_data for async
-async def get_llm():
+async def get_llm():  # Async but no caching
     return await initialize_llm()
 
 # --- Initialize LLM outside Streamlit context ---
@@ -32,7 +31,6 @@ llm = None
 async def setup_llm():
     global llm
     llm = await get_llm()
-
 
 # --- Search Tool Setup ---
 search_tool = DuckDuckGoSearchRun()
@@ -92,7 +90,7 @@ async def generate_news(topic, time):
         return None
 
 async def main():
-    await setup_llm()  # Initialize LLM
+    await setup_llm()
 
     if st.button("Generate News"):
         if topic and time:
