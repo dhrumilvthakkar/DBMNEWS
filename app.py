@@ -36,19 +36,18 @@ async def setup_llm():
 search_tool = DuckDuckGoSearchRun()
 
 # --- Streamlit App ---
-st.title("Daily Tech News Generator")
+st.title("News Article Generator")
 
-topic = st.text_input("Enter your topic for the news:")
-time = st.text_input("Enter the timeframe (e.g., 'past week', 'today'):")
+topic = st.text_input("Enter your topic for the news:")  # Only topic input
 
-async def generate_news(topic, time):
+async def generate_news(topic):  # Removed time parameter
     if llm is None:
         st.error("LLM initialization failed. Check API key and logs.")
         return None
 
     researcher = Agent(
         role="Senior Research Analyst",
-        goal=f"Uncover cutting-edge developments in {topic} in {time}",
+        goal=f"Uncover cutting-edge developments in {topic}",  # Removed time
         backstory="""You work at a leading tech think tank. Your expertise lies in identifying emerging trends. You have a knack for dissecting complex data and presenting actionable insights, including relevant sources.""",
         verbose=True,
         allow_delegation=False,
@@ -58,7 +57,7 @@ async def generate_news(topic, time):
 
     writer = Agent(
         role="Tech Content Strategist",
-        goal=f"Craft compelling news post on {topic} advancements in {time}",
+        goal=f"Craft compelling news post on {topic} advancements",  # Removed time
         backstory="""You are a renowned Content Strategist, known for your insightful and engaging news articles. You transform complex concepts into compelling narratives and always cite your sources.""",
         verbose=True,
         allow_delegation=False,
@@ -67,17 +66,17 @@ async def generate_news(topic, time):
     )
 
     task1 = Task(
-        description=f"""Conduct a comprehensive analysis of the latest advancements in {topic} in {time}, including at least 3 sources.
+        description=f"""Conduct a comprehensive analysis of the latest advancements in {topic}, including at least 3 sources.
                       Identify key trends, breakthrough technologies, and potential industry impacts.
-                      Your final answer MUST be a full analysis report with sources (URLs).""",
+                      Your final answer MUST be a full analysis report with sources (URLs).""",  # Removed time
         agent=researcher,
         expected_output="Analysis research report including sources",
     )
 
     task2 = Task(
-        description=f"""Using the insights and SOURCES provided, develop an engaging news post that highlights the most significant {topic} advancements in {time}. Include links to the sources at the end of the post.
+        description=f"""Using the insights and SOURCES provided, develop an engaging news post that highlights the most significant {topic} advancements. Include links to the sources at the end of the post.
                       Your post should be informative yet accessible, catering to a tech-savvy audience. Make it sound cool, avoid complex words.
-                      The final answer MUST be the full news post with source links at the end.""",
+                      The final answer MUST be the full news post with source links at the end.""",  # Removed time
         agent=writer,
         expected_output="Full news post with source links",
     )
@@ -93,14 +92,15 @@ async def main():
     await setup_llm()
 
     if st.button("Generate News"):
-        if topic and time:
+        if topic:  # Only check for topic
             with st.spinner("Generating news..."):
-                result = await generate_news(topic, time)
+                result = await generate_news(topic)  # Removed time argument
             if result:
                 st.subheader("Generated News:")
                 st.markdown(result)
         else:
-            st.warning("Please enter both a topic and a timeframe.")
+            st.warning("Please enter a topic.") # Changed warning message
+
 
 if __name__ == "__main__":
     asyncio.run(main())
