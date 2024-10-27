@@ -22,9 +22,17 @@ async def initialize_llm():
         st.error(f"Error initializing LLM: {e}")
         return None
 
-@st.cache_resource
-def get_llm():  # No async, caches the *result*
-    return asyncio.run(initialize_llm())
+@st.cache_data  # Use st.cache_data for async
+async def get_llm():
+    return await initialize_llm()
+
+# --- Initialize LLM outside Streamlit context ---
+llm = None
+
+async def setup_llm():
+    global llm
+    llm = await get_llm()
+
 
 # --- Search Tool Setup ---
 search_tool = DuckDuckGoSearchRun()
@@ -36,7 +44,6 @@ topic = st.text_input("Enter your topic for the news:")
 time = st.text_input("Enter the timeframe (e.g., 'past week', 'today'):")
 
 async def generate_news(topic, time):
-    llm = get_llm()
     if llm is None:
         st.error("LLM initialization failed. Check API key and logs.")
         return None
@@ -85,6 +92,8 @@ async def generate_news(topic, time):
         return None
 
 async def main():
+    await setup_llm()  # Initialize LLM
+
     if st.button("Generate News"):
         if topic and time:
             with st.spinner("Generating news..."):
