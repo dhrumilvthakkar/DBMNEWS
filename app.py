@@ -21,7 +21,7 @@ from langchain.tools import DuckDuckGoSearchRun
 
 # --- API Key Configuration (Important!) ---
 # Store your API key securely, e.g., in environment variables or secrets management.
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")  # Recommended approach
+GOOGLE_API_KEY = st.secrets("GOOGLE_API_KEY")  # Recommended approach
 
 # --- LLM Setup ---
 llm = ChatGoogleGenerativeAI(
@@ -66,7 +66,7 @@ if st.button("Generate News"):
             )
 
             task1 = Task(
-                description=f"""Conduct a comprehensive analysis of the latest advancements in {topic} in {time}.
+                description=f"""Conduct a comprehensive analysis of the latest news on {topic} in {time}.
                               Identify key trends, breakthrough technologies, and potential industry impacts.
                               Your final answer MUST be a full analysis report""",
                 agent=researcher,
