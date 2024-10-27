@@ -6,6 +6,9 @@ from crewai import Agent, Task, Crew, Process
 from langchain.tools import DuckDuckGoSearchRun
 from langchain.chains.summarize import load_summarize_chain
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+import networkx as nx
+import matplotlib.pyplot as plt
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # --- API Key Configuration ---
 # Store your API key securely in Streamlit secrets as GOOGLE_API_KEY
@@ -40,8 +43,34 @@ search_tool = DuckDuckGoSearchRun()
 # --- Text Splitter for RAG ---
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
 
+# --- Keyword Extraction and Graph Generation ---
+def extract_keywords(text):
+    vectorizer = TfidfVectorizer(stop_words='english')
+    tfidf = vectorizer.fit_transform([text])
+    keywords = vectorizer.get_feature_names_out()
+    scores = tfidf.toarray()[0]
+    return [(keyword, score) for keyword, score in zip(keywords, scores) if score > 0.1]
+
+def create_keyword_graph(keywords):
+    graph = nx.Graph()
+    for keyword, score in keywords:
+        graph.add_node(keyword, score=score)
+    for i in range(len(keywords)):
+        for j in range(i + 1, len(keywords)):
+            graph.add_edge(keywords[i][0], keywords[j][0])
+    return graph
+
+def visualize_graph(graph):
+    plt.figure(figsize=(10, 6))
+    pos = nx.spring_layout(graph)
+    node_sizes = [data['score'] * 2000 for _, data in graph.nodes(data=True)]
+    nx.draw(graph, pos, with_labels=True, node_size=node_sizes, node_color="skyblue", font_size=10, width=0.6, edge_color="grey")
+    plt.title("Keyword Graph")
+    st.pyplot(plt)
+
+
 # --- Streamlit App ---
-st.title("DBM News Generator")
+st.title("Daily Tech News Generator")
 
 topic = st.text_input("Enter your topic for the news:")
 
@@ -97,7 +126,16 @@ async def generate_news(topic):
         text_splitter=text_splitter,
     )
     try:
-        return crew.kickoff()
+        result = crew.kickoff()
+        if result:
+            # --- Keyword Extraction and Graph ---
+            keywords = extract_keywords(result)
+            graph = create_keyword_graph(keywords)
+            visualize_graph(graph)
+
+            st.subheader("Generated News:")
+            st.markdown(result)
+        return result
     except Exception as e:
         st.error(f"An error occurred during news generation: {e}")
         return None
@@ -110,9 +148,6 @@ async def main():
         if topic:
             with st.spinner("Generating news..."):
                 result = await generate_news(topic)
-            if result:
-                st.subheader("Generated News:")
-                st.markdown(result)
         else:
             st.warning("Please enter a topic.")
 
