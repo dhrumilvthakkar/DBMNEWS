@@ -6,7 +6,7 @@ from crewai import Agent, Task, Crew, Process
 from langchain.tools import DuckDuckGoSearchRun
 
 # --- API Key Configuration ---
-# Store your API key securely in Streamlit secrets.
+# Store your API key securely in Streamlit secrets as GOOGLE_API_KEY
 
 # --- LLM Setup ---
 async def initialize_llm():
@@ -26,14 +26,9 @@ async def initialize_llm():
 async def get_llm():
     return await initialize_llm()
 
-# --- Global LLM instance ---
-llm_instance = None
 
-async def get_llm_outside_generate_news():
-    global llm_instance
-    if llm_instance is None:
-        llm_instance = await get_llm()
-    return llm_instance
+# --- Initialize LLM outside Streamlit/asyncio context ---
+llm = asyncio.run(get_llm())
 
 # --- Search Tool Setup ---
 search_tool = DuckDuckGoSearchRun()
@@ -44,16 +39,12 @@ st.title("Daily Tech News Generator")
 topic = st.text_input("Enter your topic for the news:")
 time = st.text_input("Enter the timeframe (e.g., 'past week', 'today'):")
 
-async def generate_news(topic, time):
-    llm = await get_llm_outside_generate_news()
-    if llm is None:
-        st.error("LLM initialization failed. Please check your API key and logs.")
-        return
 
+async def generate_news(topic, time, llm):
     researcher = Agent(
         role="Senior Research Analyst",
         goal=f"Uncover cutting-edge developments in {topic} in {time}",
-        backstory="""...""",  # Add your backstory here
+        backstory="""...""",  # Add your backstory
         verbose=True,
         allow_delegation=False,
         llm=llm,
@@ -63,7 +54,7 @@ async def generate_news(topic, time):
     writer = Agent(
         role="Tech Content Strategist",
         goal=f"Craft compelling news post on {topic} advancements in {time}",
-        backstory="""...""", # Add your backstory here
+        backstory="""...""",  # Add your backstory
         verbose=True,
         allow_delegation=False,
         llm=llm,
@@ -89,19 +80,17 @@ async def generate_news(topic, time):
     crew = Crew(agents=[researcher, writer], tasks=[task1, task2], verbose=1)
     return crew.kickoff()
 
-async def main():
-    await get_llm_outside_generate_news() # Initialize LLM at app start
 
+async def main():
     if st.button("Generate News"):
         if topic and time:
             with st.spinner("Generating news..."):
-                result = await generate_news(topic, time)
-            if result:  # Check if result is not None (in case of errors)
+                result = await generate_news(topic, time, llm)  # Pass the LLM
+            if result:
                 st.subheader("Generated News:")
                 st.markdown(result)
         else:
             st.warning("Please enter both a topic and a timeframe.")
-
 
 if __name__ == "__main__":
     asyncio.run(main())
