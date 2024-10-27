@@ -8,14 +8,14 @@ from langchain.tools import DuckDuckGoSearchRun
 
 # --- API Key Configuration (Important!) ---
 # Store your API key securely, e.g., in environment variables or secrets management.
-GOOGLE_API_KEY = st.secrets("GOOGLE_API_KEY")  # Recommended approach
+google_api_key = st.secrets["GOOGLE_API_KEY"]  # Recommended approach
 
 # --- LLM Setup ---
 llm = ChatGoogleGenerativeAI(
     model="gemini-pro",
     verbose=True,
     temperature=0.3,
-    google_api_key=GOOGLE_API_KEY,
+    google_api_key=google_api_key,
 )
 
 # --- Search Tool Setup ---
