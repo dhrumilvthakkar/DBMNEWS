@@ -23,12 +23,8 @@ async def initialize_llm():
         return None
 
 @st.cache_resource
-async def get_llm():
-    return await initialize_llm()
-
-
-# --- Initialize LLM outside Streamlit/asyncio context ---
-llm = asyncio.run(get_llm())
+def get_llm():  # No async, caches the *result*
+    return asyncio.run(initialize_llm())
 
 # --- Search Tool Setup ---
 search_tool = DuckDuckGoSearchRun()
@@ -39,12 +35,16 @@ st.title("Daily Tech News Generator")
 topic = st.text_input("Enter your topic for the news:")
 time = st.text_input("Enter the timeframe (e.g., 'past week', 'today'):")
 
+async def generate_news(topic, time):
+    llm = get_llm()
+    if llm is None:
+        st.error("LLM initialization failed. Check API key and logs.")
+        return None
 
-async def generate_news(topic, time, llm):
     researcher = Agent(
         role="Senior Research Analyst",
         goal=f"Uncover cutting-edge developments in {topic} in {time}",
-        backstory="""...""",  # Add your backstory
+        backstory="""You work at a leading tech think tank. Your expertise lies in identifying emerging trends. You have a knack for dissecting complex data and presenting actionable insights, including relevant sources.""",
         verbose=True,
         allow_delegation=False,
         llm=llm,
@@ -54,7 +54,7 @@ async def generate_news(topic, time, llm):
     writer = Agent(
         role="Tech Content Strategist",
         goal=f"Craft compelling news post on {topic} advancements in {time}",
-        backstory="""...""",  # Add your backstory
+        backstory="""You are a renowned Content Strategist, known for your insightful and engaging news articles. You transform complex concepts into compelling narratives and always cite your sources.""",
         verbose=True,
         allow_delegation=False,
         llm=llm,
@@ -62,15 +62,15 @@ async def generate_news(topic, time, llm):
     )
 
     task1 = Task(
-        description=f"""Conduct a comprehensive analysis of the latest advancements in {topic} in {time}, including sources.
+        description=f"""Conduct a comprehensive analysis of the latest advancements in {topic} in {time}, including at least 3 sources.
                       Identify key trends, breakthrough technologies, and potential industry impacts.
-                      Your final answer MUST be a full analysis report with sources.""",
+                      Your final answer MUST be a full analysis report with sources (URLs).""",
         agent=researcher,
         expected_output="Analysis research report including sources",
     )
 
     task2 = Task(
-        description=f"""Using the insights and SOURCES provided, develop an engaging news post that highlights the most significant {topic} advancements in {time}.  Include links to the sources at the end of the post.
+        description=f"""Using the insights and SOURCES provided, develop an engaging news post that highlights the most significant {topic} advancements in {time}. Include links to the sources at the end of the post.
                       Your post should be informative yet accessible, catering to a tech-savvy audience. Make it sound cool, avoid complex words.
                       The final answer MUST be the full news post with source links at the end.""",
         agent=writer,
@@ -78,14 +78,17 @@ async def generate_news(topic, time, llm):
     )
 
     crew = Crew(agents=[researcher, writer], tasks=[task1, task2], verbose=1)
-    return crew.kickoff()
-
+    try:
+        return crew.kickoff()
+    except Exception as e:
+        st.error(f"An error occurred during news generation: {e}")
+        return None
 
 async def main():
     if st.button("Generate News"):
         if topic and time:
             with st.spinner("Generating news..."):
-                result = await generate_news(topic, time, llm)  # Pass the LLM
+                result = await generate_news(topic, time)
             if result:
                 st.subheader("Generated News:")
                 st.markdown(result)
