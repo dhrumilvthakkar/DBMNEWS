@@ -1,0 +1,5 @@
+streamlit
+crewai
+langchain
+langchain_google_genai
+duckduckgo-search
