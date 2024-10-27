@@ -41,7 +41,7 @@ search_tool = DuckDuckGoSearchRun()
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
 
 # --- Streamlit App ---
-st.title("Daily Tech News Generator")
+st.title("DBM News Generator")
 
 topic = st.text_input("Enter your topic for the news:")
 
