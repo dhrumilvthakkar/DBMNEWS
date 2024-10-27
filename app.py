@@ -2,6 +2,7 @@
 
 import os
 import streamlit as st
+import chromadb
 from langchain_google_genai import ChatGoogleGenerativeAI
 from crewai import Agent, Task, Crew, Process
 from langchain.tools import DuckDuckGoSearchRun
