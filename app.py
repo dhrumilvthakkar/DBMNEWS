@@ -30,7 +30,7 @@ async def get_llm():
 search_tool = DuckDuckGoSearchRun()
 
 # --- Streamlit App ---
-st.title("Daily Tech News Generator")
+st.title("DBM News")
 
 topic = st.text_input("Enter your topic for the news:")
 time = st.text_input("Enter the timeframe (e.g., 'past week', 'today'):")
