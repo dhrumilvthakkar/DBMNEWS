@@ -41,7 +41,7 @@ search_tool = DuckDuckGoSearchRun()
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
 
 # --- Streamlit App ---
-st.title("Daily Tech News Generator")
+st.title("Article Generator on all News Facts about Any Topic")
 
 topic = st.text_input("Enter your topic for the news:")
 
@@ -53,7 +53,7 @@ async def generate_news(topic):
     researcher = Agent(
         role="Senior Research Analyst",
         goal=f"Uncover cutting-edge developments in {topic}",
-        backstory="""You work at a leading tech think tank. Your expertise lies in identifying emerging trends. You have a knack for dissecting complex data and presenting actionable insights, including relevant sources.""",
+        backstory=""" You work at a leading tech think tank. Your expertise lies in identifying emerging trends. You have a knack for dissecting complex data and presenting actionable insights, including relevant sources.""",
         verbose=True,
         allow_delegation=False,
         llm=llm,
