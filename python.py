@@ -12,10 +12,10 @@ def is_prime(n):
         i += 6
     return True
 
-def largest_prime_below(limit):
+def largest_prime_under(limit):
     for num in range(limit - 1, 1, -1):
         if is_prime(num):
             return num
 
-limit = 100000
-print(f"The largest prime number below {limit} is {largest_prime_below(limit)}")
+limit = 1000000
+print(f"The largest prime number under {limit} is {largest_prime_under(limit)}")
